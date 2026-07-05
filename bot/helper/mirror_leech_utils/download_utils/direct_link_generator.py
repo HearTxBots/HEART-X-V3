@@ -1176,6 +1176,8 @@ def linkBox(url: str):
 
 
 def gofile(url):
+    LOGGER.info(f"Gofile URL: {url}")  # Debug
+    
     try:
         if "::" in url:
             _password = url.split("::")[-1]
@@ -1184,6 +1186,7 @@ def gofile(url):
         else:
             _password = ""
         _id = url.split("/")[-1]
+        LOGGER.info(f"Gofile ID: {_id}")  # Debug
     except Exception as e:
         raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}")
 
@@ -1195,33 +1198,38 @@ def gofile(url):
             "Accept": "*/*",
             "Connection": "keep-alive",
         }
-        # Try to use cached token first
+        
+        LOGGER.info(f"Using cached token: {bool(gofile_token_cache)}")  # Debug
+        
         if gofile_token_cache:
-            # Validate cached token by making a test request
             try:
                 test_headers = {
                     "User-Agent": user_agent,
                     "Accept-Encoding": "gzip, deflate, br",
                     "Accept": "*/*",
                     "Connection": "keep-alive",
-                    "Authorization": f"Bearer {gofile_token_cache}",  # FIX: Better formatting
+                    "Authorization": f"Bearer {gofile_token_cache}",
                 }
                 test_res = session.get(
                     "https://api.gofile.io/accounts/website",
                     headers=test_headers,
                 ).json()
+                LOGGER.info(f"Token validation: {test_res.get('status')}")  # Debug
                 if test_res.get("status") == "ok":
                     return gofile_token_cache
-            except Exception:
-                pass  # Token invalid, will create new one
+            except Exception as e:
+                LOGGER.warning(f"Token validation failed: {e}")  # Debug
+                pass
         
-        # Create new account if no valid cached token
         __url = "https://api.gofile.io/accounts"
         try:
+            LOGGER.info("Creating new GoFile account...")  # Debug
             __res = session.post(__url, headers=headers).json()
-            if __res.get("status") != "ok":  # FIX: Use .get() to avoid KeyError
-                raise DirectDownloadLinkException("ERROR: Failed to get token.")
+            LOGGER.info(f"Account creation response: {__res.get('status')}")  # Debug
+            if __res.get("status") != "ok":
+                raise DirectDownloadLinkException(f"ERROR: Failed to get token. Status: {__res.get('status')}")
             gofile_token_cache = __res["data"]["token"]
+            LOGGER.info("New token obtained successfully")  # Debug
             return gofile_token_cache
         except Exception as e:
             raise DirectDownloadLinkException(f"ERROR: Failed to create account: {e}")
@@ -1237,37 +1245,38 @@ def gofile(url):
             "Accept-Encoding": "gzip, deflate, br",
             "Accept": "*/*",
             "Connection": "keep-alive",
-            "Authorization": f"Bearer {token}",  # FIX: Better formatting
+            "Authorization": f"Bearer {token}",
             "X-Website-Token": wt,
             "X-BL": "en-US"
         }
         if _password:
             _url += f"&password={_password}"
         
+        LOGGER.info(f"Fetching content: {_url}")  # Debug
+        
         try:
             _json = session.get(_url, headers=headers).json()
+            LOGGER.info(f"Content response status: {_json.get('status')}")  # Debug
         except Exception as e:
             raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}")
         
-        # Handle token/auth errors - clear cache and retry once
-        if _json.get("status") in ["error-unauth", "error-forbidden", "error-tokenInvalid"]:
-            gofile_token_cache = None  # Clear invalid token
+        status = _json.get("status")
+        if status in ["error-unauth", "error-forbidden", "error-tokenInvalid"]:
+            LOGGER.warning(f"Token error: {status}, retrying...")  # Debug
+            gofile_token_cache = None
             if retry:
-                # Get new token and retry
                 try:
                     new_token = __get_token(session)
-                    token = new_token  # FIX: Update token variable
-                    headers["Authorization"] = f"Bearer {new_token}"  # FIX: Better formatting
+                    token = new_token
+                    headers["Authorization"] = f"Bearer {new_token}"
                     _json = session.get(_url, headers=headers).json()
-                    # Update details header with new token
                     details["header"] = f"Cookie: accountToken={new_token}"
+                    LOGGER.info("Retry successful")  # Debug
                 except Exception as e:
                     raise DirectDownloadLinkException(f"ERROR: GoFile token revoked and failed to create new token: {e}")
             else:
                 raise DirectDownloadLinkException("ERROR: GoFile token revoked.")
         
-        # FIX: Proper status checks
-        status = _json.get("status")
         if status == "error-passwordRequired":
             raise DirectDownloadLinkException(
                 f"ERROR:\n{PASSWORD_ERROR_MESSAGE.format(url)}"
@@ -1280,7 +1289,7 @@ def gofile(url):
             )
         if status == "error-notPublic":
             raise DirectDownloadLinkException("ERROR: This folder is not public")
-        if status != "ok":  # FIX: Handle unknown errors
+        if status != "ok":
             raise DirectDownloadLinkException(f"ERROR: GoFile API error: {status}")
 
         data = _json.get("data", {})
@@ -1291,6 +1300,8 @@ def gofile(url):
             details["title"] = data.get("name", _id) if data.get("type") == "folder" else _id
 
         contents = data.get("children", {})
+        LOGGER.info(f"Found {len(contents)} items")  # Debug
+        
         for content in contents.values():
             if content.get("type") == "folder":
                 if not content.get("public", False):
@@ -1304,10 +1315,11 @@ def gofile(url):
                 if not folderPath:
                     folderPath = details["title"]
                 item = {
-                    "path": folderPath,  # FIX: Don't double join
+                    "path": folderPath,
                     "filename": content.get("name", "file"),
                     "url": content.get("link", ""),
                 }
+                LOGGER.info(f"File found: {item['filename']}")  # Debug
                 if "size" in content:
                     size = content["size"]
                     try:
@@ -1318,13 +1330,15 @@ def gofile(url):
                 details["contents"].append(item)
 
     details = {"contents": [], "title": "", "total_size": 0}
-    token = None  # FIX: Initialize token variable
+    token = None
     
     with Session() as session:
         try:
             token = __get_token(session)
+            LOGGER.info(f"Token obtained: {token[:10]}...")  # Debug
         except Exception as e:
             raise DirectDownloadLinkException(f"ERROR: Failed to get token: {e}")
+        
         details["header"] = f"Cookie: accountToken={token}"
         try:
             __fetch_links(session, _id)
@@ -1335,6 +1349,9 @@ def gofile(url):
 
     if len(details["contents"]) == 0:
         raise DirectDownloadLinkException("ERROR: No files found")
+
+    LOGGER.info(f"Total files found: {len(details['contents'])}")  # Debug
+    LOGGER.info(f"Total size: {details['total_size']}")  # Debug
 
     if len(details["contents"]) == 1:
         return (details["contents"][0]["url"], details["header"])
