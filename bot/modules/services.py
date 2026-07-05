@@ -32,10 +32,8 @@ async def start(_, message):
     userid = message.from_user.id
     lang = Language()
     buttons = ButtonMaker()
-    buttons.url_button(
-        lang.START_BUTTON1, "https://www.github.com/SilentDemonSD/WZML-X"
-    )
-    buttons.url_button(lang.START_BUTTON2, "https://t.me/WZML_X")
+    buttons.url_button(lang.START_BUTTON1, "https://github.com/HearTxBots/HEART-X-V3")
+    buttons.url_button(lang.START_BUTTON2, "https://t.me/HeartxBots")
     reply_markup = buttons.build_menu(2)
 
     if len(message.command) > 1 and message.command[1] == "wzmlx":
@@ -78,11 +76,10 @@ async def start(_, message):
             )
             reply_markup = buttons.build_menu(2)
             msg = f"""⌬ Access Login Token : 
-    │
-    ┟ <b>Status</b> → <code>Generated Successfully</code>
-    ┟ <b>Access Token</b> → <code>{input_token}</code>
-    ┃
-    ┖ <b>Validity:</b> {get_readable_time(int(Config.VERIFY_TIMEOUT))}"""
+    
+    <b>┌ Status</b>: <code>Generated Successfully</code>
+    <b>├ Access Token</b>: <code>{input_token}</code>
+    <b>└ Validity:</b> {get_readable_time(int(Config.VERIFY_TIMEOUT))}"""
             return await send_message(message, msg, reply_markup)
 
     if await CustomFilters.authorized(_, message):
