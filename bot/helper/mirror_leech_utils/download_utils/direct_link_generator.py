@@ -1204,7 +1204,7 @@ def gofile(url):
                     "Accept-Encoding": "gzip, deflate, br",
                     "Accept": "*/*",
                     "Connection": "keep-alive",
-                    "Authorization": "Bearer" + " " + gofile_token_cache,
+                    "Authorization": f"Bearer {gofile_token_cache}",  # FIX: Better formatting
                 }
                 test_res = session.get(
                     "https://api.gofile.io/accounts/website",
@@ -1219,29 +1219,31 @@ def gofile(url):
         __url = "https://api.gofile.io/accounts"
         try:
             __res = session.post(__url, headers=headers).json()
-            if __res["status"] != "ok":
+            if __res.get("status") != "ok":  # FIX: Use .get() to avoid KeyError
                 raise DirectDownloadLinkException("ERROR: Failed to get token.")
             gofile_token_cache = __res["data"]["token"]
             return gofile_token_cache
         except Exception as e:
-            raise e
+            raise DirectDownloadLinkException(f"ERROR: Failed to create account: {e}")
 
     def __fetch_links(session, _id, folderPath="", retry=True):
+        global gofile_token_cache
         _url = f"https://api.gofile.io/contents/{_id}?cache=true"
         time_slot = int(time()) // 14400
-        raw = f"{user_agent}::en-US::{token}::{time_slot}::9844d94d963d30"
+        raw = f"{user_agent}::en-US::{token}::{time_slot}::g4f8fd9f12h14g"
         wt = sha256(raw.encode()).hexdigest()
         headers = {
             "User-Agent": user_agent,
             "Accept-Encoding": "gzip, deflate, br",
             "Accept": "*/*",
             "Connection": "keep-alive",
-            "Authorization": "Bearer" + " " + token,
+            "Authorization": f"Bearer {token}",  # FIX: Better formatting
             "X-Website-Token": wt,
             "X-BL": "en-US"
         }
         if _password:
             _url += f"&password={_password}"
+        
         try:
             _json = session.get(_url, headers=headers).json()
         except Exception as e:
@@ -1249,77 +1251,90 @@ def gofile(url):
         
         # Handle token/auth errors - clear cache and retry once
         if _json.get("status") in ["error-unauth", "error-forbidden", "error-tokenInvalid"]:
-            global gofile_token_cache
             gofile_token_cache = None  # Clear invalid token
             if retry:
                 # Get new token and retry
                 try:
                     new_token = __get_token(session)
-                    # Update headers with new token
-                    headers["Authorization"] = "Bearer" + " " + new_token
+                    token = new_token  # FIX: Update token variable
+                    headers["Authorization"] = f"Bearer {new_token}"  # FIX: Better formatting
                     _json = session.get(_url, headers=headers).json()
-                    # Update details header with new token for return value
-                    nonlocal details
+                    # Update details header with new token
                     details["header"] = f"Cookie: accountToken={new_token}"
-                except Exception:
-                    raise DirectDownloadLinkException("ERROR: GoFile token revoked and failed to create new token.")
+                except Exception as e:
+                    raise DirectDownloadLinkException(f"ERROR: GoFile token revoked and failed to create new token: {e}")
             else:
                 raise DirectDownloadLinkException("ERROR: GoFile token revoked.")
         
-        if _json["status"] in "error-passwordRequired":
+        # FIX: Proper status checks
+        status = _json.get("status")
+        if status == "error-passwordRequired":
             raise DirectDownloadLinkException(
                 f"ERROR:\n{PASSWORD_ERROR_MESSAGE.format(url)}"
             )
-        if _json["status"] in "error-passwordWrong":
+        if status == "error-passwordWrong":
             raise DirectDownloadLinkException("ERROR: This password is wrong !")
-        if _json["status"] in "error-notFound":
+        if status == "error-notFound":
             raise DirectDownloadLinkException(
                 "ERROR: File not found on gofile's server"
             )
-        if _json["status"] in "error-notPublic":
+        if status == "error-notPublic":
             raise DirectDownloadLinkException("ERROR: This folder is not public")
+        if status != "ok":  # FIX: Handle unknown errors
+            raise DirectDownloadLinkException(f"ERROR: GoFile API error: {status}")
 
-        data = _json["data"]
+        data = _json.get("data", {})
+        if not data:
+            raise DirectDownloadLinkException("ERROR: No data returned from GoFile")
 
         if not details["title"]:
-            details["title"] = data["name"] if data["type"] == "folder" else _id
+            details["title"] = data.get("name", _id) if data.get("type") == "folder" else _id
 
-        contents = data["children"]
+        contents = data.get("children", {})
         for content in contents.values():
-            if content["type"] == "folder":
-                if not content["public"]:
+            if content.get("type") == "folder":
+                if not content.get("public", False):
                     continue
                 if not folderPath:
-                    newFolderPath = ospath.join(details["title"], content["name"])
+                    newFolderPath = ospath.join(details["title"], content.get("name", "folder"))
                 else:
-                    newFolderPath = ospath.join(folderPath, content["name"])
+                    newFolderPath = ospath.join(folderPath, content.get("name", "folder"))
                 __fetch_links(session, content["id"], newFolderPath, retry=False)
             else:
                 if not folderPath:
                     folderPath = details["title"]
                 item = {
-                    "path": ospath.join(folderPath),
-                    "filename": content["name"],
-                    "url": content["link"],
+                    "path": folderPath,  # FIX: Don't double join
+                    "filename": content.get("name", "file"),
+                    "url": content.get("link", ""),
                 }
                 if "size" in content:
                     size = content["size"]
-                    if isinstance(size, str) and size.isdigit():
+                    try:
                         size = float(size)
+                    except (ValueError, TypeError):
+                        size = 0
                     details["total_size"] += size
                 details["contents"].append(item)
 
     details = {"contents": [], "title": "", "total_size": 0}
+    token = None  # FIX: Initialize token variable
+    
     with Session() as session:
         try:
             token = __get_token(session)
         except Exception as e:
-            raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}")
+            raise DirectDownloadLinkException(f"ERROR: Failed to get token: {e}")
         details["header"] = f"Cookie: accountToken={token}"
         try:
             __fetch_links(session, _id)
         except Exception as e:
-            raise DirectDownloadLinkException(e)
+            if isinstance(e, DirectDownloadLinkException):
+                raise
+            raise DirectDownloadLinkException(f"ERROR: {e}")
+
+    if len(details["contents"]) == 0:
+        raise DirectDownloadLinkException("ERROR: No files found")
 
     if len(details["contents"]) == 1:
         return (details["contents"][0]["url"], details["header"])
