@@ -481,7 +481,6 @@ async def get_user_settings(from_user, stype="main"):
 ├ Leech Mixed Upload : <b>{hybrid_leech}</b>  
 ├ Leech Prefix : <b>{escape(lprefix)}</b>  
 ├ Leech Suffix : <b>{escape(lsuffix)}</b>  
-├ Leech Rename : <b>{escape(lremname)}</b>  
 ├ Leech Dump : <b>{leech_dest}</b>  
 ├ Leech Custom Caption : <b>{escape(lcap)}</b>
 ├ Thumbnail : <b>{thumbmsg}</b>  
