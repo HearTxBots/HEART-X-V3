@@ -1463,7 +1463,7 @@ async def edit_user_settings(client, query):
             await database.update_user_data(user_id)
         else:
             await query.answer("Reset Cancelled.", show_alert=True)
-            await update_user_settings(query)buttons.data_button(\"No\", f\"userset {user_id} do_reset_all no\")
+            await update_user_settings(query)
     elif data[2] == "view":
         await query.answer()
         await send_file(message, thumb_path, name)
