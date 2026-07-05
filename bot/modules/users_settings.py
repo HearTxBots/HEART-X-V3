@@ -474,6 +474,7 @@ async def get_user_settings(from_user, stype="main"):
         btns = buttons.build_menu(2)
 
         text = f"""࿗ USER SETTINGS : <b>{user_name}</b>
+        
 ┌ Leech Type : <b>{ltype}</b>  
 ├ Leech Split Size : <b>{get_readable_file_size(split_size)}</b>   
 ├ Leech Equal Splits : <b>{equal_splits}</b>    
@@ -606,8 +607,7 @@ async def get_user_settings(from_user, stype="main"):
 ├ Leech Upload Client : <b>{leech_method}</b> session  
 ├ Leech Mixed Upload : <b>{hybrid_leech}</b>  
 ├ Leech Prefix : <b>{escape(lprefix)}</b>  
-├ Leech Suffix : <b>{escape(lsuffix)}</b>  
-├ Leech Rename : <b>{escape(lremname)}</b>  
+├ Leech Suffix : <b>{escape(lsuffix)}</b>    
 ├ Leech Dump : <b>{leech_dest}</b>  
 ├ Thumbnail : <b>{thumbmsg}</b>  
 ├ Thumbnail Layout : <b>{thumb_layout}</b>  
