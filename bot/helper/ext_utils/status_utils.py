@@ -3,7 +3,7 @@ from html import escape
 from re import findall
 from time import time
 
-from psutil import cpu_percent, disk_usage, virtual_memory
+from psutil import virtual_memory, cpu_percent, disk_usage, net_io_counters
 
 from ... import (
     DOWNLOAD_DIR,
