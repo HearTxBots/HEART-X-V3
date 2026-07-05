@@ -444,14 +444,14 @@ async def get_user_settings(from_user, stype="main"):
         else:
             ytopt = "Not Added"
 
+        buttons.data_button("Extra Tools", f"userset {user_id} advanced", position="l_body")
+        
         upload_paths = user_dict.get("UPLOAD_PATHS", {})
         if not upload_paths and "UPLOAD_PATHS" not in user_dict and Config.UPLOAD_PATHS:
             upload_paths = Config.UPLOAD_PATHS
         else:
             upload_paths = "Not Added"
         buttons.data_button("Upload Paths", f"userset {user_id} menu UPLOAD_PATHS", position="l_body")
-
-        buttons.data_button("Extra Tools", f"userset {user_id} advanced", position="l_body")
         
         if user_dict and any(
             key in user_dict
