@@ -20,6 +20,11 @@ from ...ext_utils.help_messages import PASSWORD_ERROR_MESSAGE
 from ...ext_utils.links_utils import is_share_link
 from ...ext_utils.status_utils import speed_string_to_bytes
 
+import logging
+
+# Create logger for this module
+LOGGER = logging.getLogger(__name__)
+
 # GoFile token cache to avoid rate limiting
 gofile_token_cache = None
 
@@ -1177,18 +1182,20 @@ def linkBox(url: str):
 
 
 def gofile(url):
-    LOGGER.info(f"Gofile URL: {url}")  # Debug
+    LOGGER.info(f"Processing GoFile URL: {url}")
     
     try:
         if "::" in url:
             _password = url.split("::")[-1]
             _password = sha256(_password.encode("utf-8")).hexdigest()
             url = url.split("::")[-2]
+            LOGGER.info("Password protected file detected")
         else:
             _password = ""
         _id = url.split("/")[-1]
-        LOGGER.info(f"Gofile ID: {_id}")  # Debug
+        LOGGER.info(f"File ID: {_id}")
     except Exception as e:
+        LOGGER.error(f"Error parsing URL: {e}")
         raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}")
 
     def __get_token(session):
@@ -1200,10 +1207,11 @@ def gofile(url):
             "Connection": "keep-alive",
         }
         
-        LOGGER.info(f"Using cached token: {bool(gofile_token_cache)}")  # Debug
+        LOGGER.info(f"Using cached token: {bool(gofile_token_cache)}")
         
         if gofile_token_cache:
             try:
+                LOGGER.info("Validating cached token...")
                 test_headers = {
                     "User-Agent": user_agent,
                     "Accept-Encoding": "gzip, deflate, br",
@@ -1215,28 +1223,37 @@ def gofile(url):
                     "https://api.gofile.io/accounts/website",
                     headers=test_headers,
                 ).json()
-                LOGGER.info(f"Token validation: {test_res.get('status')}")  # Debug
+                
                 if test_res.get("status") == "ok":
+                    LOGGER.info("Cached token is valid")
                     return gofile_token_cache
+                else:
+                    LOGGER.warning(f"Cached token invalid: {test_res.get('status')}")
             except Exception as e:
-                LOGGER.warning(f"Token validation failed: {e}")  # Debug
+                LOGGER.warning(f"Token validation failed: {e}")
                 pass
         
+        LOGGER.info("Creating new GoFile account...")
         __url = "https://api.gofile.io/accounts"
         try:
-            LOGGER.info("Creating new GoFile account...")  # Debug
             __res = session.post(__url, headers=headers).json()
-            LOGGER.info(f"Account creation response: {__res.get('status')}")  # Debug
+            LOGGER.info(f"Account creation response status: {__res.get('status')}")
+            
             if __res.get("status") != "ok":
-                raise DirectDownloadLinkException(f"ERROR: Failed to get token. Status: {__res.get('status')}")
+                LOGGER.error(f"Failed to create account: {__res.get('status')}")
+                raise DirectDownloadLinkException("ERROR: Failed to get token.")
+            
             gofile_token_cache = __res["data"]["token"]
-            LOGGER.info("New token obtained successfully")  # Debug
+            LOGGER.info(f"New token obtained successfully: {gofile_token_cache[:10]}...")
             return gofile_token_cache
         except Exception as e:
+            LOGGER.error(f"Account creation error: {e}")
             raise DirectDownloadLinkException(f"ERROR: Failed to create account: {e}")
 
-    def __fetch_links(session, _id, folderPath="", retry=True):
+    def __fetch_links(session, _id, folderPath="", retry=True, token=None):
         global gofile_token_cache
+        LOGGER.info(f"Fetching content for ID: {_id}")
+        
         _url = f"https://api.gofile.io/contents/{_id}?cache=true"
         time_slot = int(time()) // 14400
         raw = f"{user_agent}::en-US::{token}::{time_slot}::g4f8fd9f12h14g"
@@ -1252,66 +1269,107 @@ def gofile(url):
         }
         if _password:
             _url += f"&password={_password}"
+            LOGGER.info("Using password for authentication")
         
-        LOGGER.info(f"Fetching content: {_url}")  # Debug
+        LOGGER.info(f"Request URL: {_url}")
         
         try:
             _json = session.get(_url, headers=headers).json()
-            LOGGER.info(f"Content response status: {_json.get('status')}")  # Debug
+            LOGGER.info(f"Response status: {_json.get('status')}")
         except Exception as e:
+            LOGGER.error(f"Error fetching content: {e}")
             raise DirectDownloadLinkException(f"ERROR: {e.__class__.__name__}")
         
         status = _json.get("status")
+        LOGGER.info(f"API Status: {status}")
+        
         if status in ["error-unauth", "error-forbidden", "error-tokenInvalid"]:
-            LOGGER.warning(f"Token error: {status}, retrying...")  # Debug
+            LOGGER.warning(f"Token error: {status}, attempting to refresh...")
             gofile_token_cache = None
             if retry:
                 try:
+                    LOGGER.info("Getting new token...")
                     new_token = __get_token(session)
-                    token = new_token
                     headers["Authorization"] = f"Bearer {new_token}"
                     _json = session.get(_url, headers=headers).json()
                     details["header"] = f"Cookie: accountToken={new_token}"
-                    LOGGER.info("Retry successful")  # Debug
+                    token = new_token
+                    LOGGER.info("Token refresh successful")
                 except Exception as e:
+                    LOGGER.error(f"Token refresh failed: {e}")
                     raise DirectDownloadLinkException(f"ERROR: GoFile token revoked and failed to create new token: {e}")
             else:
+                LOGGER.error("Token error and retry disabled")
                 raise DirectDownloadLinkException("ERROR: GoFile token revoked.")
         
         if status == "error-passwordRequired":
+            LOGGER.warning("Password required for this file")
             raise DirectDownloadLinkException(
                 f"ERROR:\n{PASSWORD_ERROR_MESSAGE.format(url)}"
             )
         if status == "error-passwordWrong":
+            LOGGER.warning("Incorrect password provided")
             raise DirectDownloadLinkException("ERROR: This password is wrong !")
         if status == "error-notFound":
+            LOGGER.warning("File not found on GoFile")
             raise DirectDownloadLinkException(
                 "ERROR: File not found on gofile's server"
             )
         if status == "error-notPublic":
+            LOGGER.warning("Folder is not public")
             raise DirectDownloadLinkException("ERROR: This folder is not public")
         if status != "ok":
+            LOGGER.error(f"Unknown API error: {status}")
             raise DirectDownloadLinkException(f"ERROR: GoFile API error: {status}")
 
         data = _json.get("data", {})
         if not data:
+            LOGGER.error("No data returned from API")
             raise DirectDownloadLinkException("ERROR: No data returned from GoFile")
 
+        LOGGER.info(f"Data keys: {list(data.keys()) if data else 'None'}")
+        
         if not details["title"]:
             details["title"] = data.get("name", _id) if data.get("type") == "folder" else _id
+            LOGGER.info(f"Title set to: {details['title']}")
 
         contents = data.get("children", {})
-        LOGGER.info(f"Found {len(contents)} items")  # Debug
+        LOGGER.info(f"Found {len(contents)} items in content")
         
-        for content in contents.values():
+        if not contents:
+            LOGGER.warning("No children found in response")
+            # Try alternative way for single file
+            if data.get("type") == "file":
+                LOGGER.info("Single file detected")
+                item = {
+                    "path": folderPath if folderPath else details["title"],
+                    "filename": data.get("name", _id),
+                    "url": data.get("link", ""),
+                }
+                LOGGER.info(f"Single file: {item['filename']} - {item['url'][:50]}...")
+                if "size" in data:
+                    try:
+                        size = float(data["size"])
+                        details["total_size"] += size
+                        LOGGER.info(f"File size: {size} bytes")
+                    except (ValueError, TypeError):
+                        LOGGER.warning("Invalid size format")
+                details["contents"].append(item)
+                return
+        
+        for content_id, content in contents.items():
+            LOGGER.info(f"Processing content: {content_id} - Type: {content.get('type', 'unknown')}")
+            
             if content.get("type") == "folder":
+                LOGGER.info(f"Processing folder: {content.get('name', 'Unnamed')}")
                 if not content.get("public", False):
+                    LOGGER.info("Folder is not public, skipping")
                     continue
                 if not folderPath:
                     newFolderPath = ospath.join(details["title"], content.get("name", "folder"))
                 else:
                     newFolderPath = ospath.join(folderPath, content.get("name", "folder"))
-                __fetch_links(session, content["id"], newFolderPath, retry=False)
+                __fetch_links(session, content["id"], newFolderPath, retry=False, token=token)
             else:
                 if not folderPath:
                     folderPath = details["title"]
@@ -1320,42 +1378,53 @@ def gofile(url):
                     "filename": content.get("name", "file"),
                     "url": content.get("link", ""),
                 }
-                LOGGER.info(f"File found: {item['filename']}")  # Debug
+                LOGGER.info(f"File found: {item['filename']} - {item['url'][:50] if item['url'] else 'No URL'}...")
+                
                 if "size" in content:
                     size = content["size"]
                     try:
                         size = float(size)
+                        details["total_size"] += size
+                        LOGGER.info(f"Size: {size} bytes")
                     except (ValueError, TypeError):
-                        size = 0
-                    details["total_size"] += size
+                        LOGGER.warning(f"Invalid size format: {size}")
                 details["contents"].append(item)
 
     details = {"contents": [], "title": "", "total_size": 0}
-    token = None
+    LOGGER.info("Starting GoFile download process...")
     
     with Session() as session:
         try:
+            LOGGER.info("Obtaining authentication token...")
             token = __get_token(session)
-            LOGGER.info(f"Token obtained: {token[:10]}...")  # Debug
+            LOGGER.info(f"Token obtained: {token[:10]}...")
         except Exception as e:
+            LOGGER.error(f"Failed to get token: {e}")
             raise DirectDownloadLinkException(f"ERROR: Failed to get token: {e}")
         
         details["header"] = f"Cookie: accountToken={token}"
+        
         try:
-            __fetch_links(session, _id)
+            LOGGER.info(f"Fetching links for ID: {_id}")
+            __fetch_links(session, _id, token=token)
         except Exception as e:
+            LOGGER.error(f"Error in fetch_links: {e}")
             if isinstance(e, DirectDownloadLinkException):
                 raise
             raise DirectDownloadLinkException(f"ERROR: {e}")
 
     if len(details["contents"]) == 0:
+        LOGGER.warning("No files found in the response")
         raise DirectDownloadLinkException("ERROR: No files found")
 
-    LOGGER.info(f"Total files found: {len(details['contents'])}")  # Debug
-    LOGGER.info(f"Total size: {details['total_size']}")  # Debug
+    LOGGER.info(f"Successfully processed {len(details['contents'])} files")
+    LOGGER.info(f"Total size: {details['total_size']} bytes")
 
     if len(details["contents"]) == 1:
+        LOGGER.info("Single file found, returning direct link")
         return (details["contents"][0]["url"], details["header"])
+    
+    LOGGER.info("Multiple files found, returning folder details")
     return details
 
 
