@@ -1,8 +1,10 @@
 # ruff: noqa: E402
+try:
+    from uvloop import install
 
-from uvloop import install
-
-install()
+    install()
+except ImportError:
+    pass
 
 from asyncio import new_event_loop, set_event_loop
 
@@ -25,9 +27,11 @@ from os import cpu_count
 from time import time
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from pyrogram import utils as pyroutils
 
 from .core.config_manager import BinConfig
 from sabnzbdapi import SabnzbdClient
+
 
 getLogger("requests").setLevel(WARNING)
 getLogger("urllib3").setLevel(WARNING)
@@ -38,6 +42,8 @@ getLogger("httpx").setLevel(WARNING)
 getLogger("pymongo").setLevel(WARNING)
 getLogger("aiohttp").setLevel(WARNING)
 
+pyroutils.MIN_CHAT_ID = -999999999999
+pyroutils.MIN_CHANNEL_ID = -100999999999999
 
 bot_start_time = time()
 
