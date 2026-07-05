@@ -377,7 +377,7 @@ async def get_user_settings(from_user, stype="main"):
             default_upload = Config.DEFAULT_UPLOAD
         du = "Gdrive" if default_upload == "gd" else "Rclone"
         dur = "Gdrive" if default_upload != "gd" else "Rclone"
-        buttons.data_button(f"Upload Using {dur} Mode", f"userset {user_id} {default_upload}", position="header")
+        buttons.data_button(f"Upload Using {dur} ", f"userset {user_id} {default_upload}", position="header")
 
         user_tokens = user_dict.get("USER_TOKENS", False)
         tr = "USER" if user_tokens else "OWNER"
@@ -1184,11 +1184,11 @@ async def get_menu(option, message, user_id):
         elif await aiopath.exists(file_dict[option]):
             buttons.data_button("Remove", f"userset {user_id} remove {option}")
     if option in leech_options:
-        back_to = "main"
+        back_to = "leech"
     elif option in rclone_options:
-        back_to = "main"
+        back_to = "rclone"
     elif option in gdrive_options:
-        back_to = "main"
+        back_to = "gdrive"
     elif option in yt_options:
         back_to = "yttools"
     elif option in ffset_options:
@@ -1222,32 +1222,26 @@ async def get_menu(option, message, user_id):
             val = "<b>Not Exists</b>"
 
     if option == "METADATA":
-        text = f"""□ <b><u>Menu Settings :</u></b>
-│
-┟ <b>Option</b> → {option}
-┃
-├ <b>Option's Value</b> → {val if val else "<b>Not Exists</b>"}
-┃
-├ <b>Default Input Type</b> → {user_settings_text[option][0]}
-├ <b>Description</b> → {user_settings_text[option][1]}
-┃
+        text = f"""□ <b>MENU SETTINGS :</b>
+        
+┌ <b>Option</b> : {option}
+├ <b>Option's Value</b> : {val if val else "<b>Not Exists</b>"}
+├ <b>Default Input Type</b> : {user_settings_text[option][0]}
+├ <b>Description</b> : {user_settings_text[option][1]}
 ├ <b>Dynamic Variables:</b>
 ├ • <code>{{filename}}</code> - Full filename
 ├ • <code>{{basename}}</code> - Filename without extension  
 ├ • <code>{{extension}}</code> - File extension
-┃
 ├ • <code>{{audiolang}}</code> - Audio language
-┖ • <code>{{sublang}}</code> - Subtitle language
+└ • <code>{{sublang}}</code> - Subtitle language
 """
     else:
-        text = f"""□ <b><u>Menu Settings :</u></b>
-│
-┟ <b>Option</b> → {option}
-┃
-├ <b>Option's Value</b> → {val if val else "<b>Not Exists</b>"}
-┃
-├ <b>Default Input Type</b> → {user_settings_text[option][0]}
-┖ <b>Description</b> → {user_settings_text[option][1]}
+        text = f"""□ <b>MENU SETTINGS :</b>
+
+┌ <b>Option</b> : {option}
+├ <b>Option's Value</b> : {val if val else "<b>Not Exists</b>"}
+├ <b>Default Input Type</b> : {user_settings_text[option][0]}
+└ <b>Description</b> : {user_settings_text[option][1]}
 """
     await edit_message(message, text, buttons.build_menu(2))
 
@@ -1309,7 +1303,6 @@ async def edit_user_settings(client, query):
     elif data[2] == "setevent":
         await query.answer()
     elif data[2] in [
-        "main",
         "leech",
         "uphoster",
         "gofile",
@@ -1470,7 +1463,7 @@ async def edit_user_settings(client, query):
             await database.update_user_data(user_id)
         else:
             await query.answer("Reset Cancelled.", show_alert=True)
-            await update_user_settings(query)
+            await update_user_settings(query)buttons.data_button(\"No\", f\"userset {user_id} do_reset_all no\")
     elif data[2] == "view":
         await query.answer()
         await send_file(message, thumb_path, name)
@@ -1478,7 +1471,7 @@ async def edit_user_settings(client, query):
         await query.answer()
         du = "rc" if data[2] == "gd" else "gd"
         update_user_ldata(user_id, "DEFAULT_UPLOAD", du)
-        await update_user_settings(query, stype="general")
+        await update_user_settings(query, stype="main")
         await database.update_user_data(user_id)
     elif data[2] == "back":
         await query.answer()
