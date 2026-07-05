@@ -375,14 +375,14 @@ async def get_user_settings(from_user, stype="main"):
             default_upload = user_dict["DEFAULT_UPLOAD"]
         elif "DEFAULT_UPLOAD" not in user_dict:
             default_upload = Config.DEFAULT_UPLOAD
-        du = "GDRIVE" if default_upload == "gd" else "RCLONE"
-        dur = "GDRIVE" if default_upload != "gd" else "RCLONE"
-        buttons.data_button(f"UPLOAD TO {dur} Mode", f"userset {user_id} {default_upload}")
+        du = "Gdrive" if default_upload == "gd" else "Rclone"
+        dur = "Gdrive" if default_upload != "gd" else "Rclone"
+        buttons.data_button(f"Upload Using {dur} Mode", f"userset {user_id} {default_upload}", position="header")
 
         user_tokens = user_dict.get("USER_TOKENS", False)
         tr = "USER" if user_tokens else "OWNER"
         trr = "OWNER" if user_tokens else "USER"
-        buttons.data_button(f"UPLOAD TO {trr} token/config", f"userset {user_id} tog USER_TOKENS {'f' if user_tokens else 't'}",)
+        buttons.data_button(f"Upload {trr} token/config", f"userset {user_id} tog USER_TOKENS {'f' if user_tokens else 't'}", position="l_body")
 
         buttons.data_button("Rclone Tools", f"userset {user_id} rclone", position="l_body")
 
@@ -449,7 +449,7 @@ async def get_user_settings(from_user, stype="main"):
             upload_paths = Config.UPLOAD_PATHS
         else:
             upload_paths = "Not Added"
-        buttons.data_button("Upload Paths", f"userset {user_id} menu UPLOAD_PATHS")
+        buttons.data_button("Upload Paths", f"userset {user_id} menu UPLOAD_PATHS", position="l_body")
 
         buttons.data_button("Extra Tools", f"userset {user_id} advanced", position="l_body")
         
@@ -757,7 +757,7 @@ async def get_user_settings(from_user, stype="main"):
                 "l_body",
             )
             sd_msg = "Disabled"
-        buttons.data_button("Back", f"userset {user_id} back mirror", "footer")
+        buttons.data_button("Back", f"userset {user_id} back main", "footer")
         buttons.data_button("Close", f"userset {user_id} close", "footer")
 
         tokenmsg = "Exists" if await aiopath.exists(token_pickle) else "Not Exists"
@@ -805,7 +805,7 @@ async def get_user_settings(from_user, stype="main"):
         else:
             sd_msg = "Disabled"
 
-        buttons.data_button("Back", f"userset {user_id} back", "footer")
+        buttons.data_button("Back", f"userset {user_id} back main", "footer")
         buttons.data_button("Close", f"userset {user_id} close", "footer")
         btns = buttons.build_menu(1)
 
@@ -898,7 +898,7 @@ async def get_user_settings(from_user, stype="main"):
             "YT Cookie File", f"userset {user_id} menu USER_COOKIE_FILE"
         )
 
-        buttons.data_button("Back", f"userset {user_id} back", "footer")
+        buttons.data_button("Back", f"userset {user_id} back main", "footer")
         buttons.data_button("Close", f"userset {user_id} close", "footer")
         btns = buttons.build_menu(1)
 
@@ -956,7 +956,7 @@ async def get_user_settings(from_user, stype="main"):
             ),
         )
 
-        buttons.data_button("Back", f"userset {user_id} back mirror", "footer")
+        buttons.data_button("Back", f"userset {user_id} back main", "footer")
         buttons.data_button("Close", f"userset {user_id} close", "footer")
         btns = buttons.build_menu(2)
 
@@ -1184,11 +1184,11 @@ async def get_menu(option, message, user_id):
         elif await aiopath.exists(file_dict[option]):
             buttons.data_button("Remove", f"userset {user_id} remove {option}")
     if option in leech_options:
-        back_to = "leech"
+        back_to = "main"
     elif option in rclone_options:
-        back_to = "rclone"
+        back_to = "main"
     elif option in gdrive_options:
-        back_to = "gdrive"
+        back_to = "main"
     elif option in yt_options:
         back_to = "yttools"
     elif option in ffset_options:
@@ -1309,8 +1309,7 @@ async def edit_user_settings(client, query):
     elif data[2] == "setevent":
         await query.answer()
     elif data[2] in [
-        "general",
-        "mirror",
+        "main",
         "leech",
         "uphoster",
         "gofile",
@@ -1374,9 +1373,9 @@ async def edit_user_settings(client, query):
         if data[3] == "STOP_DUPLICATE":
             back_to = "gdrive"
         elif data[3] in ["USER_TOKENS", "USE_DEFAULT_COOKIE"]:
-            back_to = "general"
+            back_to = "main"
         else:
-            back_to = "leech"
+            back_to = "main"
         await update_user_settings(query, stype=back_to)
         await database.update_user_data(user_id)
     elif data[2] == "file":
