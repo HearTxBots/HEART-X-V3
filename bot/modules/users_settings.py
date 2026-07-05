@@ -498,7 +498,6 @@ async def get_user_settings(from_user, stype="main"):
 
 ┌ Default Package : <b>{du}</b>  
 ├ Upload Using : <b>{tr}'s</b> token/config  
-├ YT Cookies Mode : <b>{cookie_mode}</b>
 ├ Upload Paths : <b>{upload_paths}</b>  
 ├ YT-DLP : <b>{ytopt}</b>  
 └ Extension Ext : <code>{ex_ex}</code>"""
@@ -963,7 +962,8 @@ async def get_user_settings(from_user, stype="main"):
 
         text = f"""□ <b>YOUTUBE SETTINGS : {user_name}</b>
 
-┌ <b>YT-DLP Options</b> : <code>{ytopt}</code>
+┌ YT Cookies Mode : <b>{cookie_mode}</b>
+├ <b>YT-DLP Options</b> : <code>{ytopt}</code>
 ├ <b>YT Description</b> : <code>{escape(str(yt_desp_val))}</code>
 ├ <b>YT Tags</b> : <code>{escape(str(yt_tags_val))}</code>
 ├ <b>YT Category ID</b> : <code>{escape(str(yt_cat_id_val))}</code>
