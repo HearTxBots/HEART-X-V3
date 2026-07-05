@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlparse, quote
 from urllib3.util.retry import Retry
 from uuid import uuid4
 from base64 import b64decode, b64encode
+from bot import LOGGER
 
 from ....core.config_manager import Config
 from ...ext_utils.exceptions import DirectDownloadLinkException
