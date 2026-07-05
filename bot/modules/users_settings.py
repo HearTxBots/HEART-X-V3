@@ -303,9 +303,9 @@ async def get_user_settings(from_user, stype="main"):
         thumbmsg = "Exists" if await aiopath.exists(thumbpath) else "Not Exists"
         
         if user_dict.get("LEECH_SPLIT_SIZE", False):
-            split_size = "Added"
+            split_size = user_dict["LEECH_SPLIT_SIZE"]
         else:
-            split_size = "Not Added"
+            split_size = Config.LEECH_SPLIT_SIZE
     
         if user_dict.get("LEECH_PREFIX", False):
             lprefix = "Added"
@@ -516,6 +516,7 @@ async def get_user_settings(from_user, stype="main"):
             split_size = user_dict["LEECH_SPLIT_SIZE"]
         else:
             split_size = Config.LEECH_SPLIT_SIZE
+            
         buttons.data_button(
             "Leech Destination", f"userset {user_id} menu LEECH_DUMP_CHAT"
         )
