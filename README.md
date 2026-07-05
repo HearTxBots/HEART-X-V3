@@ -1,37 +1,26 @@
 <p align="center">
-   <img src="docs/WZML-X.png" alt="WZML-X logo" width="420">
+   <img src="docs/HeartxBots.png" alt="HeartxBots logo" width="420">
 </p>
 
-<h1 align="center">WZML-X</h1>
-
+<!-- HEADER -->
 <p align="center">
-   Telegram mirroring and leeching platform with a container-based runtime, a lightweight web UI, and a configurable transfer pipeline.
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&weight=700&size=40&duration=4000&pause=500&color=FF4E50&center=true&vCenter=true&width=800&lines=🪩+Heart+X+Bots;⚡+Leech+%26+Mirror+Repo;🚀+Fast+%7C+Reliable+%7C+Ad-Free" />
+</p>
+
+<!-- TELEGRAM BUTTON -->
+<p align="center">
+  <a href="https://t.me/heartxbots">
+    <img src="https://img.shields.io/badge/🚀%20JOIN%20OUR%20TELEGRAM%20CHANNEL-ff4e50?style=for-the-badge&logo=telegram&logoColor=white&labelColor=ff758c" />
+  </a>
+</p>
+
+<!-- DIVIDER -->
+<p align="center">
+  <img src="https://github.com/rohanreddych/gradient-lines/blob/main/purple-pink.gif?raw=true" width="100%" />
 </p>
 
 <p align="center">
-   <a href="https://github.com/SilentDemonSD/WZML-X">
-      <img src="https://img.shields.io/github/stars/SilentDemonSD/WZML-X?style=for-the-badge&logo=github&label=Stars" alt="Stars">
-   </a>
-
-   <a href="https://github.com/SilentDemonSD/WZML-X/search?l=python">
-      <img src="https://img.shields.io/github/languages/top/SilentDemonSD/WZML-X?style=for-the-badge&logo=python&label=Python" alt="Python">
-   </a>
-
-   <a href="https://github.com/SilentDemonSD/WZML-X/blob/main/docker-compose.yml">
-      <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Compose">
-   </a>
-
-   <a href="https://t.me/WZML_X">
-      <img src="https://img.shields.io/badge/Telegram-Community-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram">
-   </a>
-
-   <a href="https://github.com/SilentDemonSD/WZML-X/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/SilentDemonSD/WZML-X?style=for-the-badge&label=License" alt="License">
-   </a>
-
-   <a href="https://github.com/SilentDemonSD/WZML-X/commits/main">
-      <img src="https://img.shields.io/github/last-commit/SilentDemonSD/WZML-X?style=for-the-badge&label=Last%20Commit" alt="Last Commit">
-   </a>
+  <img src="https://img.shields.io/badge/⚕️%20HEROKU%20SUPPORTED%20REPO-WITHOUT%20SUSPENSION%20OR%20BAN-FFD700?style=for-the-badge&logo=heroku&logoColor=white" alt="Heroku supported" width="600" />
 </p>
 
 ## Index
@@ -64,7 +53,7 @@
 
 ## Why Use It
 
-WZML-X is built for users who want a single bot stack that can mirror, leech, manage files, and expose a simple web-based selection flow without stitching together multiple tools. The README focuses on what you need to deploy it quickly, understand the moving parts, and tune the behavior safely.
+HeartxBots is built for users who want a single bot stack that can mirror, leech, manage files, and expose a simple web-based selection flow without stitching together multiple tools. The README focuses on what you need to deploy it quickly, understand the moving parts, and tune the behavior safely.
 
 ## What It Covers
 
@@ -96,8 +85,8 @@ Deploy with Docker and provide the required configuration values. The container 
    <summary>Recommended: Docker Compose</summary>
 
    ```bash
-   git clone https://github.com/SilentDemonSD/WZML-X.git
-   cd WZML-X
+   git clone https://github.com/HearTxBots/HEART-X-V3.git
+   cd HEART-X-V3
    docker compose up --build
    ```
 
@@ -108,8 +97,8 @@ Deploy with Docker and provide the required configuration values. The container 
    <summary>Single Container</summary>
 
    ```bash
-   git clone https://github.com/SilentDemonSD/WZML-X.git
-   cd WZML-X
+   git clone https://github.com/HearTxBots/HEART-X-V3.git
+   cd HEART-X-V3
    docker build -t wzmlx .
    docker run -p 80:80 -p 8080:8080 wzmlx
    ```
@@ -206,54 +195,13 @@ Then tune the optional behavior from `config_sample.py`.
 <details>
    <summary>Join Community</summary>
 
-   - Telegram channel: https://t.me/WZML_X
-   - Support group: https://t.me/WZML_Support
+   - Telegram channel: https://t.me/HeartxBots
+   - Support group: https://t.me/TgHelpingGroupHeart
 </details>
 
 ## Credits
 
-WZML-X is a fork of [mirror-leech-telegram-bot](https://github.com/anasty17/mirror-leech-telegram-bot). The base project belongs to [anasty17](https://github.com/anasty17) and upstream contributors.
-
-<details>
-   <summary>Bot Authors</summary>
-
-   <table>
-      <thead>
-         <tr>
-            <th>Avatar</th>
-            <th>Name</th>
-            <th>Role</th>
-            <th>Profile</th>
-         </tr>
-      </thead>
-      <tbody>
-         <tr>
-            <td><img src="https://avatars.githubusercontent.com/u/105407900?v=4" width="72" alt="SilentDemonSD"></td>
-            <td>SilentDemonSD</td>
-            <td>Author, UI design, and custom features</td>
-            <td><a href="https://github.com/SilentDemonSD">GitHub</a></td>
-         </tr>
-         <tr>
-            <td><img src="https://avatars.githubusercontent.com/u/93116400?v=4" width="72" alt="RjRiajul"></td>
-            <td>RjRiajul</td>
-            <td>Co-author and maintainer</td>
-            <td><a href="https://github.com/rjriajul">GitHub</a></td>
-         </tr>
-         <tr>
-            <td><img src="https://avatars.githubusercontent.com/u/113664541?v=4" width="72" alt="CodeWithWeeb"></td>
-            <td>CodeWithWeeb</td>
-            <td>Feature expansion and wrap-up improvements</td>
-            <td><a href="https://github.com/weebzone">GitHub</a></td>
-         </tr>
-         <tr>
-            <td><img src="https://avatars.githubusercontent.com/u/84721324?v=4" width="72" alt="Maverick"></td>
-            <td>Maverick</td>
-            <td>Co-author and bug testing</td>
-            <td><a href="https://github.com/MajnuRangeela">GitHub</a></td>
-         </tr>
-      </tbody>
-   </table>
-</details>
+HeartxBots is a fork of [WZML-X](https://github.com/SilentDemonSD/WZML-X). The base project belongs to [SilentDemonSD](https://github.com/SilentDemonSD/WZML-X) and upstream contributors.
 
 ## License
 
