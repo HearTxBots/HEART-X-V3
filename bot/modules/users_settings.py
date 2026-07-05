@@ -382,7 +382,7 @@ async def get_user_settings(from_user, stype="main"):
         user_tokens = user_dict.get("USER_TOKENS", False)
         tr = "USER" if user_tokens else "OWNER"
         trr = "OWNER" if user_tokens else "USER"
-        buttons.data_button(f"Upload {trr} token/config", f"userset {user_id} tog USER_TOKENS {'f' if user_tokens else 't'}", position="l_body")
+        buttons.data_button(f"Upload {trr} token/config", f"userset {user_id} tog USER_TOKENS {'f' if user_tokens else 't'}", position="f_body")
 
         buttons.data_button("Rclone Tools", f"userset {user_id} rclone", position="l_body")
 
