@@ -34,6 +34,8 @@ from ..helper.telegram_helper.message_utils import (
 
 handler_dict = {}
 
+no_thumb = "https://files.catbox.moe/mcy00d.jpg"
+
 leech_options = [
     "THUMBNAIL",
     "LEECH_SPLIT_SIZE",
@@ -294,9 +296,11 @@ async def get_user_settings(from_user, stype="main"):
     user_id = from_user.id
     user_name = from_user.mention(style="html")
     buttons = ButtonMaker()
+    thumbpath = f"thumbnails/{user_id}.jpg"
     rclone_conf = f"rclone/{user_id}.conf"
     token_pickle = f"tokens/{user_id}.pickle"
     user_dict = user_data.get(user_id, {})
+    thumbnail = thumbpath if await aiopath.exists(thumbpath) else no_thumb
 
     if stype == "main":
         thumbpath = f"thumbnails/{user_id}.jpg"
@@ -443,8 +447,6 @@ async def get_user_settings(from_user, stype="main"):
             ytopt = "Added"
         else:
             ytopt = "Not Added"
-
-        buttons.data_button("Extra Tools", f"userset {user_id} advanced", position="l_body")
         
         upload_paths = user_dict.get("UPLOAD_PATHS", {})
         if not upload_paths and "UPLOAD_PATHS" not in user_dict and Config.UPLOAD_PATHS:
@@ -475,33 +477,33 @@ async def get_user_settings(from_user, stype="main"):
 
         text = f"""࿗ USER SETTINGS : <b>{user_name}</b>
         
-┌ Leech Type : <b>{ltype}</b>  
-├ Leech Split Size : <b>{get_readable_file_size(split_size)}</b>   
-├ Leech Equal Splits : <b>{equal_splits}</b>    
-├ Leech Upload Client : <b>{leech_method}</b> session  
-├ Leech Mixed Upload : <b>{hybrid_leech}</b>  
-├ Leech Prefix : <b>{escape(lprefix)}</b>  
-├ Leech Suffix : <b>{escape(lsuffix)}</b>  
-├ Leech Dump : <b>{leech_dest}</b>  
-├ Leech Custom Caption : <b>{escape(lcap)}</b>
-├ Thumbnail : <b>{thumbmsg}</b>  
-├ Thumbnail Layout : <b>{thumb_layout}</b>  
-└ Media Group : <b>{media_group}</b>  
+<b>┌ Leech Type:</b> {ltype}
+<b>├ Split Size:</b> {get_readable_file_size(split_size)}   
+<b>├ Equal Splits:</b> {equal_splits}
+<b>├ Upload Client:</b> <b>{leech_method}</b> session  
+<b>├ Mixed Upload:</b> {hybrid_leech}
+<b>├ Prefix:</b> {escape(lprefix)}
+<b>├ Suffix:</b> {escape(lsuffix)}
+<b>├ Dump:</b> {leech_dest}
+<b>├ Custom Caption:</b> {escape(lcap)}
+<b>├ Thumbnail:</b> {thumbmsg}
+<b>├ Thumbnail Layout:</b> {thumb_layout}
+<b>└ Media Group:</b> {media_group}
 
-┌ Rclone Config : <b>{rccmsg}</b>
-├ Rclone Flags : <b>{rcflags}</b>
-└ Rclone Path : <b>{rccpath}</b>
+<b>┌ Rclone Config:</b> {rccmsg}
+<b>├ Rclone Flags:</b> {rcflags}
+<b>└ Rclone Path:</b> {rccpath}
 
-┌ Token Pickle : <b>{tokenmsg}</b>  
-├ Gdrive ID : <b>{gdrive_id}</b>  
-├ Index Link : <b>{index}</b>  
-└ Stop Duplicate : <b>{sd_msg}</b>  
+<b>┌ Token Pickle:</b> {tokenmsg}
+<b>├ Gdrive ID:</b> {gdrive_id}
+<b>├ Index Link:</b> {index}
+<b>└ Stop Duplicate:</b> {sd_msg}
 
-┌ Default Package : <b>{du}</b>  
-├ Upload Using : <b>{tr}'s</b> token/config  
-├ Upload Paths : <b>{upload_paths}</b>  
-├ YT-DLP : <b>{ytopt}</b>  
-└ Extension Ext : <code>{ex_ex}</code>"""
+<b>┌ Default Package: <b>{du}</b>  
+<b>├ Upload Using:</b> <b>{tr}'s</b> token/config  
+<b>├ Upload Paths:</b> {upload_paths}
+<b>├ YT-DLP:</b> {ytopt}
+<b>└ Extension Ext:</b> <code>{ex_ex}</code>"""
 
         
     elif stype == "leech":
@@ -539,6 +541,13 @@ async def get_user_settings(from_user, stype="main"):
             lsuffix = Config.LEECH_SUFFIX
         else:
             lsuffix = "Not Exists"
+
+        ns_msg = (
+            f"<code>{swap}</code>"
+            if (swap := user_dict.get("NAME_SWAP", False))
+            else "<b>Not Exists</b>"
+        )
+        buttons.data_button("Name Swap", f"userset {user_id} menu NAME_SWAP")
 
         buttons.data_button("Caption", f"userset {user_id} menu LEECH_CAPTION")
         if user_dict.get("LEECH_CAPTION", False):
@@ -599,27 +608,25 @@ async def get_user_settings(from_user, stype="main"):
         buttons.data_button("Close", f"userset {user_id} close", "footer")
         btns = buttons.build_menu(2)
 
-        text = f"""□ LEECH TOOLS : <b>{user_name}</b>
+        text = f"""<b>□ LEECH TOOLS: {user_name}</b>
 
-┌ Leech Type : <b>{ltype}</b>  
-├ Leech Split Size : <b>{get_readable_file_size(split_size)}</b>   
-├ Leech Equal Splits : <b>{equal_splits}</b>    
-├ Leech Upload Client : <b>{leech_method}</b> session  
-├ Leech Mixed Upload : <b>{hybrid_leech}</b>  
-├ Leech Prefix : <b>{escape(lprefix)}</b>  
-├ Leech Suffix : <b>{escape(lsuffix)}</b>    
-├ Leech Dump : <b>{leech_dest}</b>  
-├ Thumbnail : <b>{thumbmsg}</b>  
-├ Thumbnail Layout : <b>{thumb_layout}</b>  
-├ Media Group : <b>{media_group}</b>
-└ Leech Custom Caption : <b>{escape(lcap)}</b>"""
+<b>┌ Leech Type:</b> {ltype}
+<b>├ Split Size:</b> {get_readable_file_size(split_size)}</b>   
+<b>├ Equal Splits:</b> {equal_splits} 
+<b>├ Upload Client:</b> <b>{leech_method}</b> session  
+<b>├ Mixed Upload:</b> {hybrid_leech}
+<b>├ Prefix:</b> {escape(lprefix)}
+<b>├ Suffix:</b> {escape(lsuffix)}
+<b>├ Name Swaps</b>: {ns_msg}
+<b>├ Dump:</b> {leech_dest}
+<b>├ Thumbnail:</b> {thumbmsg}
+<b>├ Thumbnail Layout:</b> {thumb_layout} 
+<b>├ Media Group:</b> {media_group}
+<b>└ Custom Caption:</b> {escape(lcap)}"""
 
     elif stype == "uphoster":
         uphoster_service = user_dict.get("UPHOSTER_SERVICE", "gofile")
-        buttons.data_button(
-            "Change Destination ⇋",
-            f"userset {user_id} uphoster_destinations",
-        )
+        buttons.data_button("Change Destination ⇋", f"userset {user_id} uphoster_destinations",)
         buttons.data_button("Gofile Tools", f"userset {user_id} gofile")
         buttons.data_button("BuzzHeavier Tools", f"userset {user_id} buzzheavier")
         buttons.data_button("PixelDrain Tools", f"userset {user_id} pixeldrain")
@@ -628,9 +635,9 @@ async def get_user_settings(from_user, stype="main"):
         btns = buttons.build_menu(1)
 
         destinations = [s.capitalize() for s in uphoster_service.split(",")]
-        text = f"""□ <b>UPHOSTER SETTINGS : {user_name}</b>
+        text = f"""<b>□ UPHOSTER SETTINGS: {user_name}</b>
 
-└ <b>Current Destination</b> " {', '.join(destinations)}"""
+<b>Current Destination</b> " {', '.join(destinations)}"""
 
     elif stype == "pixeldrain":
         buttons.data_button("PixelDrain Key", f"userset {user_id} menu PIXELDRAIN_KEY")
@@ -645,7 +652,7 @@ async def get_user_settings(from_user, stype="main"):
         else:
             pdtoken = "None"
 
-        text = f"""□ <b>PIXELDRAIN SETTINGS : {user_name}</b>
+        text = f"""<b>□ PIXELDRAIN SETTINGS: {user_name}</b>
  
 <b>PixelDrain Key</b>: <code>{pdtoken}</code>"""
 
@@ -672,10 +679,10 @@ async def get_user_settings(from_user, stype="main"):
         else:
             bzfolder = "None"
 
-        text = f"""□ <b>BUZZHEAVIER SETTINGS : {user_name}</b>
+        text = f"""<b>□ BUZZHEAVIER SETTINGS: {user_name}</b>
 
-┌ <b>BuzzHeavier Token</b> : <code>{bztoken}</code>
-└ <b>BuzzHeavier Folder ID</b> : <code>{bzfolder}</code>"""
+<b>┌ BuzzHeavier Token:</b> <code>{bztoken}</code>
+<b>└ BuzzHeavier Folder ID:</b> <code>{bzfolder}</code>"""
 
     elif stype == "gofile":
         buttons.data_button("Gofile Token", f"userset {user_id} menu GOFILE_TOKEN")
@@ -700,10 +707,10 @@ async def get_user_settings(from_user, stype="main"):
         else:
             gffolder = "None (Uploads to Root)"
 
-        text = f"""□ <b>GOFILE SETTINGS : {user_name}</b>
+        text = f"""<b>□ GOFILE SETTINGS: {user_name}</b>
 
-┌ <b>Gofile Token</b> : <code>{gftoken}</code>
-└ <b>Gofile Folder ID</b> : <code>{gffolder}</code>"""
+<b>┌ Gofile Token:</b> <code>{gftoken}</code>
+<b>└ Gofile Folder ID:</b> <code>{gffolder}</code>"""
 
     elif stype == "rclone":
         buttons.data_button("Rclone Config", f"userset {user_id} menu RCLONE_CONFIG")
@@ -731,11 +738,11 @@ async def get_user_settings(from_user, stype="main"):
         else:
             rcflags = "None"
 
-        text = f"""□ <b>RCLONE SETTINGS : {user_name}</b>
+        text = f"""<b>□ RCLONE SETTINGS: {user_name}</b>
 
-┌ <b>Rclone Config</b> → <b>{rccmsg}</b>
-├ <b>Rclone Flags</b> → <code>{rcflags}</code>
-└ <b>Rclone Path</b> → <code>{rccpath}</code>"""
+<b>┌ Rclone Config:</b> <b>{rccmsg}</b>
+<b>├ Rclone Flags:</b> <code>{rcflags}</code>
+<b>└ Rclone Path:</b> <code>{rccpath}</code>"""
 
     elif stype == "gdrive":
         buttons.data_button("token.pickle", f"userset {user_id} menu TOKEN_PICKLE")
@@ -770,12 +777,12 @@ async def get_user_settings(from_user, stype="main"):
         index = user_dict["INDEX_URL"] if user_dict.get("INDEX_URL", False) else "None"
         btns = buttons.build_menu(2)
 
-        text = f"""□ <b>GDRIVE SETTINGS : {user_name}</b>
+        text = f"""<b>□ GDRIVE SETTINGS: {user_name}</b>
 
-┌ <b>Gdrive Token</b> → <b>{tokenmsg}</b>
-├ <b>Gdrive ID</b> → <code>{gdrive_id}</code>
-├ <b>Index URL</b> → <code>{index}</code>
-└ <b>Stop Duplicate</b> → <b>{sd_msg}</b>"""
+<b>┌ Gdrive Token:</b> <b>{tokenmsg}</b>
+<b>├ Gdrive ID:</b> <code>{gdrive_id}</code>
+<b>├ Index URL:</b> <code>{index}</code>
+<b>└ Stop Duplicate:</b> <b>{sd_msg}</b>"""
         
     elif stype == "mirror":
         buttons.data_button("RClone Tools", f"userset {user_id} rclone")
@@ -875,38 +882,13 @@ async def get_user_settings(from_user, stype="main"):
         buttons.data_button("Close", f"userset {user_id} close", "footer")
         btns = buttons.build_menu(2)
 
-        text = f"""□ <b>FFMPEG SETTINGS : {user_name}</b>
+        text = f"""<b>□ FFMPEG SETTINGS: {user_name}</b>
 
-┌ <b>FFmpeg CLI Commands</b> : {display_meta_val}
-├ <b>Default Metadata</b> : {display_meta_val}
-├ <b>Audio Metadata</b> : {display_audio_meta}
-├ <b>Video Metadata</b> : {display_video_meta}
-└ <b>Subtitle Metadata</b> : {display_subtitle_meta}"""
-
-    elif stype == "advanced":
-        ns_msg = (
-            f"<code>{swap}</code>"
-            if (swap := user_dict.get("NAME_SWAP", False))
-            else "<b>Not Exists</b>"
-        )
-        buttons.data_button("Name Swap", f"userset {user_id} menu NAME_SWAP")
-
-        yt_cookie_path = f"cookies/{user_id}/cookies.txt"
-        user_cookie_msg = (
-            "Exists" if await aiopath.exists(yt_cookie_path) else "Not Exists"
-        )
-        buttons.data_button(
-            "YT Cookie File", f"userset {user_id} menu USER_COOKIE_FILE"
-        )
-
-        buttons.data_button("Back", f"userset {user_id} back main", "footer")
-        buttons.data_button("Close", f"userset {user_id} close", "footer")
-        btns = buttons.build_menu(1)
-
-        text = f"""□ <b>EXTRA SETTINGS : {user_name}</b>
-
-┌ <b>Name Swaps</b> : {ns_msg}
-└ <b>YT User Cookie File</b> → <b>{user_cookie_msg}</b>"""
+<b>┌ FFmpeg CLI Commands</b> : {display_meta_val}
+<b>├ Default Metadata</b> : {display_meta_val}
+<b>├ Audio Metadata</b> : {display_audio_meta}
+<b>├ Video Metadata</b> : {display_video_meta}
+<b>└ Subtitle Metadata</b> : {display_subtitle_meta}"""
         
     elif stype == "yttools":
         def_cookies = user_dict.get("USE_DEFAULT_COOKIE", False)
@@ -957,18 +939,28 @@ async def get_user_settings(from_user, stype="main"):
             ),
         )
 
+        yt_cookie_path = f"cookies/{user_id}/cookies.txt"
+        user_cookie_msg = (
+            "Exists" if await aiopath.exists(yt_cookie_path) else "Not Exists"
+        )
+        buttons.data_button(
+            "YT Cookie File", f"userset {user_id} menu USER_COOKIE_FILE"
+        )
+        
+
         buttons.data_button("Back", f"userset {user_id} back main", "footer")
         buttons.data_button("Close", f"userset {user_id} close", "footer")
         btns = buttons.build_menu(2)
 
-        text = f"""□ <b>YOUTUBE SETTINGS : {user_name}</b>
+        text = f"""<b>□ YOUTUBE SETTINGS: {user_name}</b>
 
-┌ <b>YT Cookies Mode</b> : {cookie_mode}
-├ <b>YT-DLP Options</b> : <code>{ytopt}</code>
-├ <b>YT Description</b> : <code>{escape(str(yt_desp_val))}</code>
-├ <b>YT Tags</b> : <code>{escape(str(yt_tags_val))}</code>
-├ <b>YT Category ID</b> : <code>{escape(str(yt_cat_id_val))}</code>
-└ <b>YT Privacy Status</b> : <code>{escape(str(yt_privacy_val))}</code>"""
+<b>┌ YT Cookies Mode:</b> {cookie_mode}
+<b>├ YT-DLP Options:</b> <code>{ytopt}</code>
+<b>├ YT Description:</b> <code>{escape(str(yt_desp_val))}</code>
+<b>├ YT Tags:</b> <code>{escape(str(yt_tags_val))}</code>
+<b>├ YT Category ID:</b> <code>{escape(str(yt_cat_id_val))}</code>
+<b>├ YT Privacy Status:</b> <code>{escape(str(yt_privacy_val))}</code>
+<b>└ YT User Cookie File:</b> <b>{user_cookie_msg}</b>"""
 
     return text, btns
 
@@ -1225,16 +1217,16 @@ async def get_menu(option, message, user_id):
     if option == "METADATA":
         text = f"""□ <b>MENU SETTINGS :</b>
         
-┌ <b>Option</b> : {option}
-├ <b>Option's Value</b> : {val if val else "<b>Not Exists</b>"}
-├ <b>Default Input Type</b> : {user_settings_text[option][0]}
-├ <b>Description</b> : {user_settings_text[option][1]}
-├ <b>Dynamic Variables:</b>
-├ • <code>{{filename}}</code> - Full filename
-├ • <code>{{basename}}</code> - Filename without extension  
-├ • <code>{{extension}}</code> - File extension
-├ • <code>{{audiolang}}</code> - Audio language
-└ • <code>{{sublang}}</code> - Subtitle language
+<b>┌ Option:</b> {option}
+<b>├ Option's Value:</b> {val if val else "<b>Not Exists</b>"}
+<b>├ Default Input Type:</b> {user_settings_text[option][0]}
+<b>├ Description:</b> {user_settings_text[option][1]}
+<b>├ Dynamic Variables:</b>
+<b>├ • </b><code>{{filename}}</code> - Full filename
+<b>├ • </b><code>{{basename}}</code> - Filename without extension  
+<b>├ • </b><code>{{extension}}</code> - File extension
+<b>├ • </b><code>{{audiolang}}</code> - Audio language
+<b>└ • </b><code>{{sublang}}</code> - Subtitle language
 """
     else:
         text = f"""□ <b>MENU SETTINGS :</b>
