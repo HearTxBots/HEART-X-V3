@@ -2,7 +2,7 @@ from asyncio import sleep, gather
 from re import match as re_match
 from time import time
 
-from pyrogram.types import Message
+from pyrogram.types import Message, InputMediaPhoto
 from pyrogram.enums import ParseMode
 from pyrogram.errors import (
     FloodWait,
@@ -30,105 +30,186 @@ from ..ext_utils.exceptions import TgLinkException
 from ..ext_utils.status_utils import get_readable_message
 
 
-async def send_message(message, text, buttons=None, block=True, photo=None, **kwargs):
+async def send_message(
+    message,
+    text,
+    buttons=None,
+    photo=None,
+    markdown=False,
+    block=True,
+):
+    parse_mode = ParseMode.MARKDOWN if markdown else ParseMode.HTML
+
     try:
-        if photo:
-            try:
-                if isinstance(message, int):
+        # Case 1: message is chat_id (int)
+        if isinstance(message, int):
+            if photo:
+                try:
                     return await TgClient.bot.send_photo(
                         chat_id=message,
                         photo=photo,
                         caption=text,
                         reply_markup=buttons,
                         disable_notification=True,
-                        **kwargs,
+                        parse_mode=parse_mode,
                     )
-                return await message.reply_photo(
-                    photo=photo,
-                    reply_to_message_id=message.id,
-                    caption=text,
-                    quote=True,
-                    reply_markup=buttons,
-                    disable_notification=True,
-                    **kwargs,
-                )
-            except FloodWait as f:
-                LOGGER.warning(str(f))
-                if not block:
-                    return str(f)
-                await sleep(f.value * 1.2)
-                return await send_message(message, text, buttons, block, photo)
-            except MediaCaptionTooLong:
-                return await send_message(
-                    message,
-                    text[:1024],
-                    buttons,
-                    block,
-                    photo,
-                )
-            except (PhotoInvalidDimensions, WebpageCurlFailed, MediaEmpty):
-                LOGGER.error("Invalid photo dimensions or empty media", exc_info=True)
-                return
-            except Exception:
-                LOGGER.error("Error while sending photo", exc_info=True)
-                return
-        if isinstance(message, int):
+                except MediaCaptionTooLong:
+                    return await TgClient.bot.send_photo(
+                        chat_id=message,
+                        photo=photo,
+                        caption=text[:1024],
+                        reply_markup=buttons,
+                        disable_notification=True,
+                        parse_mode=parse_mode,
+                    )
+                except (PhotoInvalidDimensions, WebpageCurlFailed, MediaEmpty):
+                    return await TgClient.bot.send_message(
+                        chat_id=message,
+                        text=text,
+                        reply_markup=buttons,
+                        disable_notification=True,
+                        parse_mode=parse_mode,
+                    )
+
             return await TgClient.bot.send_message(
                 chat_id=message,
                 text=text,
+                reply_markup=buttons,
                 disable_web_page_preview=True,
                 disable_notification=True,
-                reply_markup=buttons,
+                parse_mode=parse_mode,
             )
+
+        # Case 2: message is a Message object
+        if photo:
+            try:
+                return await message.reply_photo(
+                    photo=photo,
+                    caption=text,
+                    reply_markup=buttons,
+                    disable_notification=True,
+                    reply_to_message_id=message.id,
+                    parse_mode=parse_mode,
+                )
+            except MediaCaptionTooLong:
+                return await message.reply_photo(
+                    photo=photo,
+                    caption=text[:1024],
+                    reply_markup=buttons,
+                    disable_notification=True,
+                    reply_to_message_id=message.id,
+                    parse_mode=parse_mode,
+                )
+            except (PhotoInvalidDimensions, WebpageCurlFailed, MediaEmpty):
+                return await message.reply(
+                    text=text,
+                    reply_markup=buttons,
+                    disable_web_page_preview=True,
+                    disable_notification=True,
+                    parse_mode=parse_mode,
+                )
+
         return await message.reply(
             text=text,
             quote=True,
             disable_web_page_preview=True,
             disable_notification=True,
             reply_markup=buttons,
-            **kwargs,
+            parse_mode=parse_mode,
         )
+
     except FloodWait as f:
-        LOGGER.warning(str(f))
+        LOGGER.warning(f"FloodWait: {f}")
         if not block:
-            return str(f)
+            return message
         await sleep(f.value * 1.2)
-        return await send_message(message, text, buttons)
-    except ReplyMarkupInvalid as rmi:
-        LOGGER.warning(str(rmi))
-        return await send_message(message, text, None)
+        return await send_message(message, text, buttons, photo, markdown)
+
+    except ReplyMarkupInvalid:
+        return await send_message(message, text, None, photo, markdown)
+
     except (MessageEmpty, EntityBoundsInvalid):
-        return await send_message(message, text, parse_mode=ParseMode.DISABLED)
+        return await message.reply(
+            text=text,
+            quote=True,
+            disable_web_page_preview=True,
+            disable_notification=True,
+            reply_markup=buttons,
+        )
     except PeerIdInvalid:
         if isinstance(message, int):
             await TgClient.bot.resolve_peer(message)
             return await send_message(message, text, buttons, block, photo)
         raise
     except Exception as e:
-        LOGGER.error(str(e), exc_info=True)
+        LOGGER.error(f"send_message error: {e}", exc_info=True)
         return str(e)
 
 
-async def edit_message(message, text, buttons=None, block=True):
+async def edit_message(
+    message,
+    text,
+    buttons=None,
+    photo=None,
+    markdown=False,
+    block=True,
+):
+    parse_mode = ParseMode.MARKDOWN if markdown else ParseMode.HTML
+
     try:
+        if photo:
+            try:
+                media = InputMediaPhoto(media=photo, caption=text, parse_mode=parse_mode)
+                return await message.edit_media(media, reply_markup=buttons)
+            except MediaCaptionTooLong:
+                media = InputMediaPhoto(media=photo, caption=text[:1024], parse_mode=parse_mode)
+                return await message.edit_media(media, reply_markup=buttons)
+            except Exception:
+                return await message.edit_caption(
+                    caption=text,
+                    reply_markup=buttons,
+                    parse_mode=parse_mode,
+                )
+
+        if getattr(message, "caption", None) is not None:
+            try:
+                return await message.edit_caption(
+                    caption=text,
+                    reply_markup=buttons,
+                    parse_mode=parse_mode,
+                )
+            except MediaCaptionTooLong:
+                return await message.edit_caption(
+                    caption=text[:1024],
+                    reply_markup=buttons,
+                    parse_mode=parse_mode,
+                )
+
         return await message.edit(
             text=text,
             disable_web_page_preview=True,
             reply_markup=buttons,
+            parse_mode=parse_mode,
         )
-    except (MessageNotModified, MessageEmpty):
-        pass
-    except ReplyMarkupInvalid as rmi:
-        LOGGER.warning(str(rmi))
-        return await edit_message(message, text, None)
+
     except FloodWait as f:
-        LOGGER.warning(str(f))
+        LOGGER.warning(f"FloodWait: {f}")
         if not block:
-            return str(f)
+            return message
         await sleep(f.value * 1.2)
-        return await edit_message(message, text, buttons)
+        return await edit_message(message, text, buttons, photo, markdown)
+
+    except ReplyMarkupInvalid:
+        return await edit_message(message, text, None, photo, markdown)
+
+    except MessageNotModified:
+        pass
+
+    except MessageEmpty:
+        pass
+
     except Exception as e:
-        LOGGER.error(str(e), exc_info=True)
+        LOGGER.error(f"edit_message error: {e}", exc_info=True)
         return str(e)
 
 
@@ -177,7 +258,7 @@ async def send_rss(text, chat_id, thread_id):
     except (FloodWait, FloodPremiumWait) as f:
         LOGGER.warning(str(f))
         await sleep(f.value * 1.2)
-        return await send_rss(text)
+        return await send_rss(text, chat_id, thread_id)
     except Exception as e:
         LOGGER.error(str(e), exc_info=True)
         return str(e)
@@ -384,4 +465,4 @@ async def send_status_message(msg, user_id=0):
         if not intervals["status"].get(sid) and not is_user:
             intervals["status"][sid] = SetInterval(
                 Config.STATUS_UPDATE_INTERVAL, update_status_message, sid
-            )
+                    )
