@@ -2,25 +2,13 @@ from asyncio import sleep, gather
 from re import match as re_match
 from time import time
 
-from pyrogram.types import Message, InputMediaPhoto
-from pyrogram.enums import ParseMode
+from pyrogram import enums
 from pyrogram.errors import (
     FloodWait,
-    MessageNotModified,
     MessageEmpty,
-    ReplyMarkupInvalid,
-    PhotoInvalidDimensions,
-    WebpageCurlFailed,
-    MediaEmpty,
-    MediaCaptionTooLong,
-    EntityBoundsInvalid,
-    PeerIdInvalid,
+    MessageNotModified,
 )
-
-try:
-    from pyrogram.errors import FloodPremiumWait
-except ImportError:
-    FloodPremiumWait = FloodWait
+from pyrogram.types import InputMediaPhoto, Message
 
 from ... import LOGGER, intervals, status_dict, task_dict_lock
 from ...core.config_manager import Config
@@ -38,77 +26,26 @@ async def send_message(
     markdown=False,
     block=True,
 ):
-    parse_mode = ParseMode.MARKDOWN if markdown else ParseMode.HTML
-
+    parse_mode = enums.ParseMode.MARKDOWN if markdown else enums.ParseMode.HTML
     try:
-        # Case 1: message is chat_id (int)
         if isinstance(message, int):
-            if photo:
-                try:
-                    return await TgClient.bot.send_photo(
-                        chat_id=message,
-                        photo=photo,
-                        caption=text,
-                        reply_markup=buttons,
-                        disable_notification=True,
-                        parse_mode=parse_mode,
-                    )
-                except MediaCaptionTooLong:
-                    return await TgClient.bot.send_photo(
-                        chat_id=message,
-                        photo=photo,
-                        caption=text[:1024],
-                        reply_markup=buttons,
-                        disable_notification=True,
-                        parse_mode=parse_mode,
-                    )
-                except (PhotoInvalidDimensions, WebpageCurlFailed, MediaEmpty):
-                    return await TgClient.bot.send_message(
-                        chat_id=message,
-                        text=text,
-                        reply_markup=buttons,
-                        disable_notification=True,
-                        parse_mode=parse_mode,
-                    )
-
             return await TgClient.bot.send_message(
                 chat_id=message,
                 text=text,
-                reply_markup=buttons,
                 disable_web_page_preview=True,
+                disable_notification=True,
+                reply_markup=buttons,
+                parse_mode=parse_mode,
+            )
+        if photo:
+            return await message.reply_photo(
+                photo=photo,
+                reply_to_message_id=message.id,
+                caption=text,
+                reply_markup=buttons,
                 disable_notification=True,
                 parse_mode=parse_mode,
             )
-
-        # Case 2: message is a Message object
-        if photo:
-            try:
-                return await message.reply_photo(
-                    photo=photo,
-                    caption=text,
-                    reply_markup=buttons,
-                    disable_notification=True,
-                    reply_to_message_id=message.id,
-                    parse_mode=parse_mode,
-                )
-            except MediaCaptionTooLong:
-                return await message.reply_photo(
-                    photo=photo,
-                    caption=text[:1024],
-                    reply_markup=buttons,
-                    disable_notification=True,
-                    reply_to_message_id=message.id,
-                    parse_mode=parse_mode,
-                )
-            except (PhotoInvalidDimensions, WebpageCurlFailed, MediaEmpty):
-                return await message.reply(
-                    text=text,
-                    reply_markup=buttons,
-                    disable_web_page_preview=True,
-                    disable_notification=True,
-                    parse_mode=parse_mode,
-                )
-
         return await message.reply(
             text=text,
             quote=True,
@@ -117,32 +54,14 @@ async def send_message(
             reply_markup=buttons,
             parse_mode=parse_mode,
         )
-
     except FloodWait as f:
-        LOGGER.warning(f"FloodWait: {f}")
+        LOGGER.warning(str(f))
         if not block:
             return message
         await sleep(f.value * 1.2)
         return await send_message(message, text, buttons, photo, markdown)
-
-    except ReplyMarkupInvalid:
-        return await send_message(message, text, None, photo, markdown)
-
-    except (MessageEmpty, EntityBoundsInvalid):
-        return await message.reply(
-            text=text,
-            quote=True,
-            disable_web_page_preview=True,
-            disable_notification=True,
-            reply_markup=buttons,
-        )
-    except PeerIdInvalid:
-        if isinstance(message, int):
-            await TgClient.bot.resolve_peer(message)
-            return await send_message(message, text, buttons, block, photo)
-        raise
     except Exception as e:
-        LOGGER.error(f"send_message error: {e}", exc_info=True)
+        LOGGER.error(str(e))
         return str(e)
 
 
@@ -154,62 +73,33 @@ async def edit_message(
     markdown=False,
     block=True,
 ):
-    parse_mode = ParseMode.MARKDOWN if markdown else ParseMode.HTML
-
+    parse_mode = enums.ParseMode.MARKDOWN if markdown else enums.ParseMode.HTML
     try:
-        if photo:
-            try:
-                media = InputMediaPhoto(media=photo, caption=text, parse_mode=parse_mode)
-                return await message.edit_media(media, reply_markup=buttons)
-            except MediaCaptionTooLong:
-                media = InputMediaPhoto(media=photo, caption=text[:1024], parse_mode=parse_mode)
-                return await message.edit_media(media, reply_markup=buttons)
-            except Exception:
-                return await message.edit_caption(
-                    caption=text,
-                    reply_markup=buttons,
-                    parse_mode=parse_mode,
+        if message.media:
+            if photo:
+                return await message.edit_media(
+                    InputMediaPhoto(photo, text),
+                    reply_markup=buttons
                 )
-
-        if getattr(message, "caption", None) is not None:
-            try:
-                return await message.edit_caption(
-                    caption=text,
-                    reply_markup=buttons,
-                    parse_mode=parse_mode,
-                )
-            except MediaCaptionTooLong:
-                return await message.edit_caption(
-                    caption=text[:1024],
-                    reply_markup=buttons,
-                    parse_mode=parse_mode,
-                )
-
-        return await message.edit(
+            return await message.edit_caption(
+                caption=text,
+                reply_markup=buttons
+            )
+        await message.edit(
             text=text,
-            disable_web_page_preview=True,
             reply_markup=buttons,
             parse_mode=parse_mode,
         )
-
     except FloodWait as f:
-        LOGGER.warning(f"FloodWait: {f}")
+        LOGGER.warning(str(f))
         if not block:
             return message
         await sleep(f.value * 1.2)
         return await edit_message(message, text, buttons, photo, markdown)
-
-    except ReplyMarkupInvalid:
-        return await edit_message(message, text, None, photo, markdown)
-
-    except MessageNotModified:
+    except (MessageNotModified, MessageEmpty):
         pass
-
-    except MessageEmpty:
-        pass
-
     except Exception as e:
-        LOGGER.error(f"edit_message error: {e}", exc_info=True)
+        LOGGER.error(str(e))
         return str(e)
 
 
@@ -255,10 +145,10 @@ async def send_rss(text, chat_id, thread_id):
             message_thread_id=thread_id,
             disable_notification=True,
         )
-    except (FloodWait, FloodPremiumWait) as f:
+    except (FloodWait) as f:
         LOGGER.warning(str(f))
         await sleep(f.value * 1.2)
-        return await send_rss(text, chat_id, thread_id)
+        return await send_rss(text)
     except Exception as e:
         LOGGER.error(str(e), exc_info=True)
         return str(e)
@@ -417,52 +307,79 @@ async def update_status_message(sid, force=False):
 async def send_status_message(msg, user_id=0):
     if intervals["stopAll"]:
         return
+
     sid = user_id or msg.chat.id
     is_user = bool(user_id)
+
     async with task_dict_lock:
-        if sid in status_dict:
-            page_no = status_dict[sid]["page_no"]
-            status = status_dict[sid]["status"]
-            page_step = status_dict[sid]["page_step"]
-            text, buttons = await get_readable_message(
-                sid, is_user, page_no, status, page_step
-            )
-            if text is None:
+
+        # 🔥 Ensure structure always exists
+        data = status_dict.setdefault(sid, {
+            "message": None,
+            "time": time(),
+            "page_no": 1,
+            "page_step": 1,
+            "status": "All",
+            "is_user": is_user,
+        })
+
+        # 🔒 Safe reads
+        page_no = data.get("page_no", 1)
+        status = data.get("status", "All")
+        page_step = data.get("page_step", 1)
+
+        text, buttons = await get_readable_message(
+            sid, is_user, page_no, status, page_step
+        )
+
+        if text is None:
+            if sid in status_dict:
                 del status_dict[sid]
-                if obj := intervals["status"].get(sid):
-                    obj.cancel()
-                    del intervals["status"][sid]
-                return
-            old_message = status_dict[sid]["message"]
+            if obj := intervals["status"].get(sid):
+                obj.cancel()
+                del intervals["status"][sid]
+            return
+
+        # 🔄 If message exists → update
+        if data.get("message"):
+            old_message = data["message"]
+
             message = await send_message(msg, text, buttons, block=False)
             if isinstance(message, str):
                 LOGGER.error(
                     f"Status with id: {sid} haven't been sent. Error: {message}"
                 )
                 return
+
             await delete_message(old_message)
             message.text = text
-            status_dict[sid].update({"message": message, "time": time()})
+
+            data.update({
+                "message": message,
+                "time": time()
+            })
+
+        # 🆕 First time creation
         else:
-            text, buttons = await get_readable_message(sid, is_user)
-            if text is None:
-                return
             message = await send_message(msg, text, buttons, block=False)
             if isinstance(message, str):
                 LOGGER.error(
                     f"Status with id: {sid} haven't been sent. Error: {message}"
                 )
                 return
+
             message.text = text
-            status_dict[sid] = {
+
+            data.update({
                 "message": message,
                 "time": time(),
-                "page_no": 1,
-                "page_step": 1,
-                "status": "All",
-                "is_user": is_user,
-            }
+                "is_user": is_user
+            })
+
+        # ⏱ Interval setup
         if not intervals["status"].get(sid) and not is_user:
             intervals["status"][sid] = SetInterval(
-                Config.STATUS_UPDATE_INTERVAL, update_status_message, sid
-                    )
+                Config.STATUS_UPDATE_INTERVAL,
+                update_status_message,
+                sid
+            )
