@@ -965,7 +965,7 @@ async def get_user_settings(from_user, stype="main"):
 
 async def update_user_settings(query, stype="main"):
     handler_dict[query.from_user.id] = False
-    msg, button = await get_user_settings(query.from_user, stype)
+    msg, button, t = await get_user_settings(query.from_user, stype)
     await edit_message(query.message, msg, button, t)
 
 
@@ -973,7 +973,7 @@ async def update_user_settings(query, stype="main"):
 async def send_user_settings(_, message):
     from_user = message.from_user
     handler_dict[from_user.id] = False
-    msg, button = await get_user_settings(from_user)
+    msg, button, t = await get_user_settings(from_user)
     await send_message(message, msg, button, t)
 
 
