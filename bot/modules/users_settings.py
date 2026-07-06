@@ -525,14 +525,14 @@ async def get_user_settings(from_user, stype="main"):
             leech_dest = Config.LEECH_DUMP_CHAT
         else:
             leech_dest = "None"
-        buttons.data_button("Leech Prefix", f"userset {user_id} menu LEECH_PREFIX")
+        buttons.data_button("Prefix", f"userset {user_id} menu LEECH_PREFIX")
         if user_dict.get("LEECH_PREFIX", False):
             lprefix = user_dict["LEECH_PREFIX"]
         elif "LEECH_PREFIX" not in user_dict and Config.LEECH_PREFIX:
             lprefix = Config.LEECH_PREFIX
         else:
             lprefix = "Not Exists"
-        buttons.data_button("Leech Suffix", f"userset {user_id} menu LEECH_SUFFIX")
+        buttons.data_button("Suffix", f"userset {user_id} menu LEECH_SUFFIX")
         if user_dict.get("LEECH_SUFFIX", False):
             lsuffix = user_dict["LEECH_SUFFIX"]
         elif "LEECH_SUFFIX" not in user_dict and Config.LEECH_SUFFIX:
@@ -540,7 +540,7 @@ async def get_user_settings(from_user, stype="main"):
         else:
             lsuffix = "Not Exists"
 
-        buttons.data_button("Leech Caption", f"userset {user_id} menu LEECH_CAPTION")
+        buttons.data_button("Caption", f"userset {user_id} menu LEECH_CAPTION")
         if user_dict.get("LEECH_CAPTION", False):
             lcap = user_dict["LEECH_CAPTION"]
         elif "LEECH_CAPTION" not in user_dict and Config.LEECH_CAPTION:
@@ -556,17 +556,17 @@ async def get_user_settings(from_user, stype="main"):
             buttons.data_button("As Document", f"userset {user_id} tog AS_DOCUMENT t")
 
         if (user_dict.get("EQUAL_SPLITS", False) or "EQUAL_SPLITS" not in user_dict and Config.EQUAL_SPLITS):
-            buttons.data_button("Disable Equal Splits", f"userset {user_id} tog EQUAL_SPLITS f")
+            buttons.data_button("✅ Equal Splits", f"userset {user_id} tog EQUAL_SPLITS f")
             equal_splits = "Enabled"
         else:
-            buttons.data_button("Enable Equal Splits", f"userset {user_id} tog EQUAL_SPLITS t")
+            buttons.data_button("❎ Equal Splits", f"userset {user_id} tog EQUAL_SPLITS t")
             equal_splits = "Disabled"
 
         if (user_dict.get("MEDIA_GROUP", False) or "MEDIA_GROUP" not in user_dict and Config.MEDIA_GROUP):
-            buttons.data_button("Disable Media Group", f"userset {user_id} tog MEDIA_GROUP f")
+            buttons.data_button("✅ Media Group", f"userset {user_id} tog MEDIA_GROUP f")
             media_group = "Enabled"
         else:
-            buttons.data_button("Enable Media Group", f"userset {user_id} tog MEDIA_GROUP t")
+            buttons.data_button("❎ Media Group", f"userset {user_id} tog MEDIA_GROUP t")
             media_group = "Disabled"
 
         if (TgClient.IS_PREMIUM_USER and user_dict.get("USER_TRANSMISSION", False) or "USER_TRANSMISSION" not in user_dict and Config.USER_TRANSMISSION):
@@ -580,10 +580,10 @@ async def get_user_settings(from_user, stype="main"):
 
         if (TgClient.IS_PREMIUM_USER and user_dict.get("HYBRID_LEECH", False) or "HYBRID_LEECH" not in user_dict and Config.HYBRID_LEECH):
             hybrid_leech = "Enabled"
-            buttons.data_button("Disable Hybride Leech", f"userset {user_id} tog HYBRID_LEECH f")
+            buttons.data_button("✅ Hyper Leech", f"userset {user_id} tog HYBRID_LEECH f")
         elif TgClient.IS_PREMIUM_USER:
             hybrid_leech = "Disabled"
-            buttons.data_button("Enable HYBRID Leech", f"userset {user_id} tog HYBRID_LEECH t")
+            buttons.data_button("❎ Hyper Leech", f"userset {user_id} tog HYBRID_LEECH t")
         else:
             hybrid_leech = "Disabled"
 
@@ -647,7 +647,7 @@ async def get_user_settings(from_user, stype="main"):
 
         text = f"""□ <b>PIXELDRAIN SETTINGS : {user_name}</b>
  
-└ <b>PixelDrain Key</b> → <code>{pdtoken}</code>"""
+<b>PixelDrain Key</b>: <code>{pdtoken}</code>"""
 
     elif stype == "buzzheavier":
         buttons.data_button(
@@ -963,7 +963,7 @@ async def get_user_settings(from_user, stype="main"):
 
         text = f"""□ <b>YOUTUBE SETTINGS : {user_name}</b>
 
-┌ YT Cookies Mode : <b>{cookie_mode}</b>
+┌ <b>YT Cookies Mode</b> : {cookie_mode}
 ├ <b>YT-DLP Options</b> : <code>{ytopt}</code>
 ├ <b>YT Description</b> : <code>{escape(str(yt_desp_val))}</code>
 ├ <b>YT Tags</b> : <code>{escape(str(yt_tags_val))}</code>
@@ -1239,10 +1239,13 @@ async def get_menu(option, message, user_id):
     else:
         text = f"""□ <b>MENU SETTINGS :</b>
 
-┌ <b>Option</b> : {option}
-├ <b>Option's Value</b> : {val if val else "<b>Not Exists</b>"}
-├ <b>Default Input Type</b> : {user_settings_text[option][0]}
-└ <b>Description</b> : {user_settings_text[option][1]}
+<b>• Option</b> : {option}
+
+<b>• Option's Value</b> : {val if val else "<b>Not Exists</b>"}
+
+<b>• Default Input Type</b> : {user_settings_text[option][0]}
+
+<b>• Description</b> : {user_settings_text[option][1]}
 """
     await edit_message(message, text, buttons.build_menu(2))
 
@@ -1278,7 +1281,7 @@ async def event_handler(client, query, pfunc, rfunc, photo=False, document=False
             msg = await client.get_messages(query.message.chat.id, query.message.id)
             text = msg.text.split("\n")
             text[-1] = (
-                f"┖ <b>Time Left :</b> <code>{round(60 - (time() - start_time), 2)} sec</code>"
+                f"<b>• Time Left :</b> <code>{round(60 - (time() - start_time), 2)} sec</code>"
             )
             await edit_message(msg, "\n".join(text), msg.reply_markup)
     client.remove_handler(*handler)
