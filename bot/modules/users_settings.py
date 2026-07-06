@@ -712,7 +712,7 @@ async def get_user_settings(from_user, stype="main"):
         )
         buttons.data_button("Rclone Flags", f"userset {user_id} menu RCLONE_FLAGS")
 
-        buttons.data_button("Back", f"userset {user_id} back mirror", "footer")
+        buttons.data_button("Back", f"userset {user_id} back main", "footer")
         buttons.data_button("Close", f"userset {user_id} close", "footer")
 
         rccmsg = "Exists" if await aiopath.exists(rclone_conf) else "Not Exists"
@@ -776,6 +776,7 @@ async def get_user_settings(from_user, stype="main"):
 ├ <b>Gdrive ID</b> → <code>{gdrive_id}</code>
 ├ <b>Index URL</b> → <code>{index}</code>
 └ <b>Stop Duplicate</b> → <b>{sd_msg}</b>"""
+        
     elif stype == "mirror":
         buttons.data_button("RClone Tools", f"userset {user_id} rclone")
         rccmsg = "Exists" if await aiopath.exists(rclone_conf) else "Not Exists"
