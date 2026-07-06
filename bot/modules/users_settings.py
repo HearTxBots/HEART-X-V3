@@ -1186,7 +1186,7 @@ async def get_menu(option, message, user_id):
     elif option in ffset_options:
         back_to = "ffset"
     elif option in upload_options:
-        back_to = "main"
+        back_to = "back"
     else:
         back_to = "back"
     buttons.data_button("Back", f"userset {user_id} {back_to}", "footer")
