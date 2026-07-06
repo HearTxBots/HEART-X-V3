@@ -469,9 +469,7 @@ async def get_user_settings(from_user, stype="main"):
                 "DEFAULT_UPLOAD",
             ]
         ):
-            buttons.data_button(
-                "Reset All", f"userset {user_id} confirm_reset_all", position="footer"
-            )
+            buttons.data_button("Reset All", f"userset {user_id} confirm_reset_all", position="l_body")
         buttons.data_button("Close", f"userset {user_id} close", position="footer")
         btns = buttons.build_menu(2)
 
@@ -962,7 +960,7 @@ async def get_user_settings(from_user, stype="main"):
 <b>├ YT Privacy Status:</b> <code>{escape(str(yt_privacy_val))}</code>
 <b>└ YT User Cookie File:</b> <b>{user_cookie_msg}</b>"""
 
-    return text, btns
+    return text, btns, thumbnail
 
 
 async def update_user_settings(query, stype="main"):
