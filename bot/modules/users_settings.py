@@ -44,7 +44,9 @@ leech_options = [
     "LEECH_SUFFIX",
     "LEECH_CAPTION",
     "THUMBNAIL_LAYOUT",
+    "NAME_SWAP",
 ]
+
 uphoster_options = [
     "GOFILE_TOKEN",
     "GOFILE_FOLDER_ID",
@@ -52,8 +54,11 @@ uphoster_options = [
     "BUZZHEAVIER_FOLDER_ID",
     "PIXELDRAIN_KEY",
 ]
+
 rclone_options = ["RCLONE_CONFIG", "RCLONE_PATH", "RCLONE_FLAGS"]
+
 gdrive_options = ["TOKEN_PICKLE", "GDRIVE_ID", "INDEX_URL"]
+
 ffset_options = [
     "FFMPEG_CMDS",
     "METADATA",
@@ -61,14 +66,10 @@ ffset_options = [
     "VIDEO_METADATA",
     "SUBTITLE_METADATA",
 ]
-advanced_options = [
-    "EXCLUDED_EXTENSIONS",
-    "NAME_SWAP",
-    "YT_DLP_OPTIONS",
-    "UPLOAD_PATHS",
-    "USER_COOKIE_FILE",
-]
-yt_options = ["YT_DESP", "YT_TAGS", "YT_CATEGORY_ID", "YT_PRIVACY_STATUS"]
+
+yt_options = ["YT_DESP", "YT_TAGS", "YT_CATEGORY_ID", "YT_PRIVACY_STATUS", "YT_DLP_OPTIONS", "USER_COOKIE_FILE",]
+
+upload_options = ["UPLOAD_PATHS", "EXCLUDED_EXTENSIONS",]
 
 user_settings_text = {
     "THUMBNAIL": (
@@ -473,7 +474,7 @@ async def get_user_settings(from_user, stype="main"):
         buttons.data_button("Close", f"userset {user_id} close", position="footer")
         btns = buttons.build_menu(2)
 
-        text = f"""࿗ USER SETTINGS : <b>{user_name}</b>
+        text = f"""<b>࿗ USER SETTINGS: {user_name}</b>
         
 <b>┌ Leech Type:</b> {ltype}
 <b>├ Split Size:</b> {get_readable_file_size(split_size)}   
@@ -1184,8 +1185,8 @@ async def get_menu(option, message, user_id):
         back_to = "yttools"
     elif option in ffset_options:
         back_to = "ffset"
-    elif option in advanced_options:
-        back_to = "advanced"
+    elif option in upload_options:
+        back_to = "main"
     else:
         back_to = "back"
     buttons.data_button("Back", f"userset {user_id} {back_to}", "footer")
