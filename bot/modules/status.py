@@ -42,9 +42,9 @@ async def task_status(_, message):
     if count == 0:
         currentTime = get_readable_time(time() - bot_start_time)
         disk = disk_usage(DOWNLOAD_DIR)
-        free = get_readable_file_size(disk.free)
-        free_percent = round((disk.free / disk.total) * 100, 2)
-
+        free = get_readable_file_size(disk_usage(DOWNLOAD_DIR).free)
+        free_percent = round(100 - disk_usage(DOWNLOAD_DIR).percent, 1)
+        
         msg = f"""<u><b>📭 NO ACTIVE TASKS</b></u>
 
 ╭ <u><b>BOT IS IDLE</b></u>
