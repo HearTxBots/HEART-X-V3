@@ -10,6 +10,7 @@ from .gd_delete import delete_file
 from .gd_search import gdrive_search, select_type
 from .help import arg_usage, bot_help
 from .mediainfo import mediainfo
+from .gen_pyro_sess import gen_pyro_string
 from .broadcast import broadcast
 from .mirror_leech import (
     mirror,
@@ -103,4 +104,5 @@ __all__ = [
     "send_user_settings",
     "ytdl",
     "ytdl_leech",
+    "gen_pyro_string",
 ]
