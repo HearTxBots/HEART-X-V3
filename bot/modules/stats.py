@@ -158,7 +158,7 @@ async def get_stats(event, key="home"):
 ┠ <b>ffmpeg:</b> {ver.get("ffmpeg", "N/A")}
 ┠ <b>7z:</b> {ver.get("7z", "N/A")}
 ┠ <b>Aiohttp:</b> {ver.get("aiohttp", "N/A")}
-┠ <b>PyroTgFork:</b> {ver.get("pyrofork", "N/A")}
+┠ <b>PyroTgFork:</b> {ver.get("pyrotgfork", "N/A")}
 ┠ <b>Google API:</b> {ver.get("gapi", "N/A")}
 ┖ <b>Mega CMD:</b> {ver.get("mega", "N/A")}
 """
